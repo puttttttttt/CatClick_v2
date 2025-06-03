@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cat Clicker - Rat Smacker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-gray-100">
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="menuOverlay" class="overlay">
+    <div class="bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-500 p-1 rounded-3xl shadow-2xl w-full max-w-lg">
+        <div class="bg-gray-800 p-6 sm:p-10 rounded-2xl"> 
+            <div class="flex justify-center items-center mb-6">
+                <svg class="paw-icon text-pink-300" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 3.5A1.5 1.5 0 018.5 2 1.5 1.5 0 017 3.5V5.08A5.002 5.002 0 004 10c0 2.76 2.24 5 5 5s5-2.24 5-5a5.002 5.002 0 00-3-4.92V3.5A1.5 1.5 0 0110 2a1.5 1.5 0 011.5 1.5v1.58A5.002 5.002 0 0016 10c0 .94-.26 1.82-.72 2.56A3.5 3.5 0 0110 16a3.5 3.5 0 01-5.28-3.44A4.962 4.962 0 004 10c0-1.6.78-3.03 2-3.92V3.5zM6 10a4 4 0 004 4 4 4 0 004-4c0-1.59-.93-2.96-2.28-3.6A3.501 3.501 0 0110 5a3.5 3.5 0 01-1.72 1.4A3.989 3.989 0 006 10zm2-3a1 1 0 110-2 1 1 0 010 2zm4 0a1 1 0 110-2 1 1 0 010 2zm-2 7a1 1 0 110-2 1 1 0 010 2zm-3-3a1 1 0 11-2 0 1 1 0 012 0zm6 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg>
+                <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-purple-300">Cat Clicker</h1>
+            </div>
+            <p class="text-lg text-purple-200 mb-8">Smack the rats, kitty!</p>
+
+            <button id="startBtn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-6 rounded-xl text-xl mb-6 cute-button focus:outline-none focus:ring-4 focus:ring-pink-300">
+                Start Smacking!
+            </button>
+
+            <div id="menuScores" class="score-list text-sm sm:text-base bg-gray-700/50 p-4 rounded-xl">
+                <p class="text-xl font-semibold text-purple-200">Top Smacks: <span id="menuHighScore" class="font-bold text-yellow-300">0</span></p>
+                <div class="mt-4">
+                <p class="text-purple-300">Latest 5 Games:</p>
+                <ul id="menuLatestScoresList" class="mt-2"></ul>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-6">Player ID: <span id="userIdDisplay" class="text-gray-400"></span></p>
+        </div>
+    </div>
+  </div>
+
+  <div id="gameOverOverlay" class="overlay hidden">
+    <div class="bg-gray-800 p-6 sm:p-8 rounded-lg shadow-2xl max-w-md w-full">
+      <h1 class="text-4xl sm:text-5xl font-bold mb-4 text-red-500">Game Over!</h1>
+      <p class="text-2xl mb-2">Rats Smacked: <span id="finalScore" class="font-bold text-orange-400">0</span></p>
+      <p class="text-lg mb-4">All-Time High Smacks: <span id="goHighScore" class="font-bold text-yellow-300">0</span></p>
+      <div id="goLatestScores" class="score-list text-sm sm:text-base mb-6">
+        <p>Latest 5 Games (Smacks):</p>
+        <ul id="goLatestScoresList"></ul>
+      </div>
+      <div class="flex space-x-4">
+        <button id="replayBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-lg transition-colors duration-150 shadow-md hover:shadow-lg cute-button">Smack Again!</button>
+        <button id="exitBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-colors duration-150 shadow-md hover:shadow-lg cute-button">Exit to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="stopBtn" class="stopBtn hidden fixed bottom-5 right-5 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg z-20 cute-button">Stop Game</button>
+
+  <audio id="bgMusic" src="assets/PixelDreams.mp3" loop></audio>
+  <audio id="collectSound" src="assets/collect.mp3"></audio> 
+  <audio id="clickSound" src="assets/click.mp3"></audio>
+  <audio id="cheerSound" src="assets/yay.mp3"></audio>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #111827; 
+  color: #F3F4F6; 
+  font-family: 'Nunito', sans-serif; /* Cute, rounded font */
+}
+
+canvas#gameCanvas {
+  display: block;
+  position: absolute;
+  top: 0; left: 0;
+  background: #1F2937; 
+}
+
+.overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(17, 24, 39, 0.85); 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 10;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.hidden { display: none !important; }
+
+.score-list ul {
+  list-style: none;
+  padding: 0;
+  max-height: 120px; 
+  overflow-y: auto;
+  background-color: rgba(55, 65, 81, 0.7); /* Slightly more opaque */
+  border-radius: 8px; 
+  padding: 10px;
+  margin-top: 10px;
+}
+.score-list li {
+  padding: 5px 8px; /* More padding */
+  border-bottom: 1px solid rgba(75, 85, 99, 0.6); 
+}
+.score-list li:last-child {
+  border-bottom: none;
+}
+
+.score-list ul::-webkit-scrollbar {
+  width: 8px;
+}
+.score-list ul::-webkit-scrollbar-track {
+  background: rgba(55, 65, 81, 0.3); 
+  border-radius: 10px;
+}
+.score-list ul::-webkit-scrollbar-thumb {
+  background: #6B7280; /* Tailwind gray-500 */
+  border-radius: 10px;
+}
+.score-list ul::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF; /* Tailwind gray-400 */
+}
+
+/* Cute button style */
+.cute-button {
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+.cute-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+.cute-button:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+ /* Paw icon style */
+.paw-icon {
+    display: inline-block;
+    width: 1.5em; /* Adjust size as needed */
+    height: 1.5em;
+    margin-right: 0.5em;
+    fill: currentColor; /* Takes color from parent text */
+    vertical-align: middle;
+}
+
+/* Ensure Tailwind classes on buttons in HTML still take precedence or are applied directly. */
+/* Classes like .stopBtn might need specific styling if not fully covered by Tailwind in HTML */
+.stopBtn {
+    /* Tailwind classes are applied in the HTML for this button, 
+       so specific styles here might only be needed for overrides or non-Tailwind aspects.
+       Example: fixed positioning is handled by Tailwind 'fixed' class in HTML.
+    */
+}
