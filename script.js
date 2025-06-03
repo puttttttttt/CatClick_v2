@@ -64,6 +64,7 @@ let countdownStart = 0;
 let isNewHigh      = false;
 const RAT_BROWN_COLOR = "#8B7355"; 
 const RAT_SMACKED_COLOR = "rgba(255, 0, 0, 0.7)"; 
+const RAT_SPEED = 1.5; // Pixels per frame for movement bursts
 
 // Canvas Resizing
 function resizeCanvas() {
@@ -124,7 +125,7 @@ function populateList(ulElement, scoresArray) {
   scoresArray.slice(-5).reverse().forEach(s => {
     const li = document.createElement('li');
     li.textContent = s;
-    li.className = 'py-1 text-purple-100'; // Match text color
+    li.className = 'py-1 text-purple-100';
     ulElement.appendChild(li);
   });
 }
@@ -149,7 +150,7 @@ function showMenu() {
 
 // Start & End Game
 function startGame() {
-  if (clickSound && clickSound.readyState >= 2) clickSound.play().catch(e => console.warn("Button click sound play error:", e));
+  playButtonSound();
   if(menuOverlay) menuOverlay.classList.add('hidden');
   if(gameOverOverlay) gameOverOverlay.classList.add('hidden');
   if(stopBtn) stopBtn.classList.remove('hidden');
@@ -193,6 +194,7 @@ function endGame() {
   if (isNewHigh) spawnConfetti();
 }
 
+// Rat Drawing Function
 function drawRat(x, y, size, direction, state, appearanceTime, timestamp, wiggleOffset, smackDetails) {
     const bodyWidth = size;
     const bodyHeight = size * 0.6;
@@ -274,22 +276,32 @@ function drawRat(x, y, size, direction, state, appearanceTime, timestamp, wiggle
     ctx.restore();
 }
 
+// Spawning Rats
 function spawnRat() {
   const baseSize = Math.min(canvas.width, canvas.height) / 9; 
   const size = baseSize * (0.8 + Math.random() * 0.4); 
-  const direction = Math.random() < 0.5 ? 0 : Math.PI; 
+  // Initial direction (left/right facing)
+  let initialDirection = Math.random() < 0.5 ? 0 : Math.PI; 
 
   targets.push({
     id: crypto.randomUUID(),
     x:    size/2 + Math.random() * (canvas.width - size), 
     y:    size/2 + Math.random() * (canvas.height - size),
     size,
-    direction, 
+    direction: initialDirection, // For visual facing
     appearanceTime: performance.now(),
     life: 1800 + Math.random() * 1500, 
-    state: 'appearing', 
+    state: 'appearing', // 'appearing', 'normal', 'smacked'
     smackDetails: null, 
-    wiggleSeed: Math.random() * 100 
+    wiggleSeed: Math.random() * 100,
+    // Movement state properties
+    moveState: {
+        isMoving: false,
+        vx: 0, // Current velocity x for burst
+        vy: 0, // Current velocity y for burst
+        moveEndTime: 0, // Timestamp when current burst ends
+        nextMoveTime: performance.now() + (Math.random() * 1500 + 1000), // Time to consider next move (1-2.5s)
+    }
   });
 }
 
@@ -305,6 +317,7 @@ function spawnConfetti() {
   }
 }
 
+// Input Handling
 function handlePointer(eventX, eventY) {
   if (gameState !== 'playing') return;
   const rect = canvas.getBoundingClientRect();
@@ -320,7 +333,7 @@ function handlePointer(eventX, eventY) {
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     if (distance < rat.size / 1.8) { 
-      if (collectSound && collectSound.readyState >= 2) { // Rat tapped sound
+      if (collectSound && collectSound.readyState >= 2) {
         collectSound.currentTime = 0;
         collectSound.play().catch(e => console.warn("Collect sound (rat tap) play error:", e));
       } else if (collectSound) {
@@ -334,21 +347,10 @@ function handlePointer(eventX, eventY) {
     }
   }
 }
-canvas.addEventListener('click', e => {
-    // Play button click sound for canvas clicks only if it's not a rat hit
-    // This might be too broad, consider if only UI buttons should trigger this.
-    // For now, any click on canvas that isn't a rat hit could play it.
-    // if (clickSound && clickSound.readyState >= 2 && gameState === 'playing') {
-    //    clickSound.play().catch(e => console.warn("General canvas click sound play error:", e));
-    // }
-    handlePointer(e.clientX, e.clientY)
-});
+canvas.addEventListener('click', e => handlePointer(e.clientX, e.clientY));
 canvas.addEventListener('touchstart', e => {
   e.preventDefault();
-  if (e.touches.length > 0) {
-    // Similar logic for touch if desired for general canvas tap sound
-    handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-  }
+  if (e.touches.length > 0) handlePointer(e.touches[0].clientX, e.touches[0].clientY);
 });
 
 // Generic button click sound function
@@ -366,10 +368,7 @@ if(stopBtn) stopBtn.addEventListener('click', () => {
   playButtonSound();
   if (gameState === 'playing' || gameState === 'countdown') endGame();
 });
-if(startBtn) startBtn.addEventListener('click', () => {
-    playButtonSound();
-    startGame();
-});
+if(startBtn) startBtn.addEventListener('click', startGame); // startGame already calls playButtonSound
 if(replayBtn) replayBtn.addEventListener('click', () => {
     playButtonSound();
     startGame();
@@ -379,6 +378,7 @@ if(exitBtn) exitBtn.addEventListener('click', () => {
   showMenu();
 });
 
+// Main Game Loop
 function gameLoop(timestamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -407,17 +407,67 @@ function gameLoop(timestamp) {
     for (let i = targets.length - 1; i >= 0; i--) {
         const rat = targets[i];
         let wiggleOffset = 0;
+
         if (rat.state !== 'smacked') {
             wiggleOffset = Math.sin(timestamp / 200 + rat.wiggleSeed) * 0.1; 
+
+            // Rat Movement Logic
+            if (!rat.moveState.isMoving && timestamp >= rat.moveState.nextMoveTime) {
+                // Start a new move burst
+                rat.moveState.isMoving = true;
+                rat.moveState.moveEndTime = timestamp + (Math.random() * 300 + 200); // Burst duration 200-500ms
+                
+                const moveAngle = Math.random() * Math.PI * 2; // Random direction
+                rat.moveState.vx = Math.cos(moveAngle) * RAT_SPEED;
+                rat.moveState.vy = Math.sin(moveAngle) * RAT_SPEED;
+
+                // Update visual direction based on horizontal movement
+                if (rat.moveState.vx > 0.1) { // Moving right
+                    rat.direction = 0; 
+                } else if (rat.moveState.vx < -0.1) { // Moving left
+                    rat.direction = Math.PI;
+                }
+                // If vx is near zero, keep previous direction or make it vertical-friendly
+            }
+
+            if (rat.moveState.isMoving) {
+                if (timestamp < rat.moveState.moveEndTime) {
+                    let newX = rat.x + rat.moveState.vx;
+                    let newY = rat.y + rat.moveState.vy;
+
+                    // Boundary checks for movement
+                    if (newX - rat.size / 2 < 0 || newX + rat.size / 2 > canvas.width) {
+                        rat.moveState.vx *= -1; // Reverse horizontal direction
+                        newX = rat.x + rat.moveState.vx; // Recalculate to avoid getting stuck
+                        // Also update visual direction
+                        rat.direction = rat.moveState.vx > 0.1 ? 0 : Math.PI;
+                    }
+                    if (newY - rat.size / 2 < 0 || newY + rat.size / 2 > canvas.height) {
+                        rat.moveState.vy *= -1; // Reverse vertical direction
+                        newY = rat.y + rat.moveState.vy; // Recalculate
+                    }
+                    
+                    rat.x = Math.max(rat.size / 2, Math.min(canvas.width - rat.size / 2, newX));
+                    rat.y = Math.max(rat.size / 2, Math.min(canvas.height - rat.size / 2, newY));
+
+                } else {
+                    // Movement burst ended
+                    rat.moveState.isMoving = false;
+                    rat.moveState.vx = 0;
+                    rat.moveState.vy = 0;
+                    rat.moveState.nextMoveTime = timestamp + (Math.random() * 2000 + 1500); // Wait 1.5-3.5s for next move
+                }
+            }
         }
         
+        // Drawing and other state updates
         if (rat.state === 'smacked') {
             if (rat.smackDetails && timestamp - rat.smackDetails.time > rat.smackDetails.duration) {
                 targets.splice(i, 1); 
                 continue;
             }
             drawRat(rat.x, rat.y, rat.size, rat.direction, rat.state, rat.appearanceTime, timestamp, wiggleOffset, rat.smackDetails);
-        } else {
+        } else { // 'appearing' or 'normal'
             if (timestamp - rat.appearanceTime > rat.life && rat.state !== 'smacked') {
                 targets.splice(i, 1); 
                 continue;
@@ -429,6 +479,7 @@ function gameLoop(timestamp) {
         }
     }
     
+    // Draw Score
     ctx.fillStyle = '#FFD700'; 
     ctx.font = `${Math.min(30, canvas.width / 25)}px Inter, sans-serif`;
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
@@ -436,6 +487,7 @@ function gameLoop(timestamp) {
     ctx.fillText(`Top: ${highScore}`, 20, 20 + parseInt(ctx.font) + 5);
   }
 
+  // Game Over Confetti
   if (gameState === 'gameover' && isNewHigh && confetti.length > 0) {
     confetti.forEach(p => {
       p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.angle += p.spin;
@@ -453,8 +505,9 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
+// Firebase Auth and Initialization
 function initializeGame() {
-    resizeCanvas(); // Initial resize
+    resizeCanvas(); 
     if (auth) {
         onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
